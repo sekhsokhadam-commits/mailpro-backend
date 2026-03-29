@@ -1,3 +1,10 @@
+// server.js
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+// Ruta POST /collect
 app.post("/collect", (req, res) => {
   const { email } = req.body;
 
@@ -14,4 +21,10 @@ app.post("/collect", (req, res) => {
     success: true,
     message: `Email ${email} guardado`
   });
+});
+
+// Puerto dinámico para Render
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en puerto ${PORT}`);
 });

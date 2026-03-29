@@ -1,6 +1,14 @@
 // server.js
-const express = require('express');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const app = express();
+
+// Configurar CORS
+app.use(cors());
 
 app.use(express.json());
 
@@ -20,6 +28,14 @@ app.post("/collect", (req, res) => {
   res.json({
     success: true,
     message: `Email ${email} guardado`
+  });
+});
+
+// Ruta GET para verificar que el servidor está activo
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Servidor mailpro-backend está activo"
   });
 });
 

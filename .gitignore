@@ -1,0 +1,7 @@
+.env
+node_modules/
+# Logs
+logs/
+npm-debug.log
+package-lock.json
+.DS_Store

@@ -1,13 +1,17 @@
-import express from "express";
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.post("/collect", (req, res) => {
+  const { email } = req.body;
 
-app.use(express.json());
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email requerido"
+    });
+  }
 
-app.post("/save-email", (req, res) => {
-  const email = req.body.email;
   console.log("Email recibido:", email);
-  res.json({ status: "ok" });
-});
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  res.json({
+    success: true,
+    message: `Email ${email} guardado`
+  });
+});

@@ -1,3 +1,4 @@
-requests
-psycopg2
-flask
+/cpa_agent.py
+/requirements.txt
+/src/
+/app/

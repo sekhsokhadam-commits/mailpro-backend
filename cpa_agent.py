@@ -43,4 +43,4 @@ def track_lead():
 if __name__ == "__main__":
     # Railway inyecta el puerto automáticamente aquí
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.1.0.0', port=port)
+    app.run(host='0.0.0.0', port=port)

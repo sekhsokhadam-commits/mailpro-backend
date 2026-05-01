@@ -1,4 +1,3 @@
-/cpa_agent.py
-/requirements.txt
-/src/
-/app/
+flask
+requests
+psycopg2

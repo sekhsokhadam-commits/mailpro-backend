@@ -7,7 +7,7 @@ app = Flask(**name**)
 
 # CONFIG
 
-DATABASE_URL = os.environ.get(“DATABASE_URL”)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 SENDGRID_API_KEY = os.environ.get(“SENDGRID_API_KEY”)
 FROM_EMAIL = os.environ.get(“FROM_EMAIL”, “noreply@mailpro.com”)
 FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)

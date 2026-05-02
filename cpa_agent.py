@@ -5,9 +5,9 @@ import hashlib
 
 app = Flask(**name**)
 
-# ─── CONFIG ───────────────────────────────────────────────
+# CONFIG
 
-DATABASE_URL = os.environ.get("DATABASE_UR")
+DATABASE_URL = os.environ.get(“DATABASE_URL”)
 SENDGRID_API_KEY = os.environ.get(“SENDGRID_API_KEY”)
 FROM_EMAIL = os.environ.get(“FROM_EMAIL”, “noreply@mailpro.com”)
 FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)
@@ -15,24 +15,24 @@ PORT = int(os.environ.get(“PORT”, 8080))
 
 AFFILIATE_LINKS = {
 “oferta1”: “https://go.hotmart.com/H101177980R”,
-“oferta2”: os.environ.get(“AFFILIATE_LINK_2”, “https://go.hotmart.com/H101177980R”),
-“oferta3”: os.environ.get(“AFFILIATE_LINK_3”, “https://go.hotmart.com/H101177980R”),
+“oferta2”: “https://go.hotmart.com/H101177980R”,
+“oferta3”: “https://go.hotmart.com/H101177980R”,
 }
 
-# ─── BASE DE DATOS ────────────────────────────────────────
+# BASE DE DATOS
 
 def get_db():
 try:
 conn = psycopg2.connect(DATABASE_URL)
 return conn
 except Exception as e:
-print(f”[DB ERROR] {e}”)
+print(”[DB ERROR] “ + str(e))
 return None
 
 def init_db():
 conn = get_db()
 if not conn:
-print(”[ERROR] No se pudo conectar a la base de datos al iniciar.”)
+print(”[ERROR] No se pudo conectar a la base de datos.”)
 return
 try:
 cur = conn.cursor()
@@ -62,44 +62,39 @@ cur.close()
 conn.close()
 print(”[DB] Tablas listas.”)
 except Exception as e:
-print(f”[DB INIT ERROR] {e}”)
+print(”[DB INIT ERROR] “ + str(e))
 
-# ─── ENVÍO DE EMAIL ───────────────────────────────────────
+# ENVIO DE EMAIL
 
 def enviar_email_bienvenida(email, nombre=””):
 if not SENDGRID_API_KEY:
-print(”[EMAIL] SENDGRID_API_KEY no configurada aún.”)
+print(”[EMAIL] SENDGRID_API_KEY no configurada.”)
 return False
+try:
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 ```
-try:
-    from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail
-
     nombre_display = nombre if nombre else "amigo/a"
     afiliado_url = AFFILIATE_LINKS.get("oferta1")
     ref = hashlib.md5(email.encode()).hexdigest()[:8]
 
-    html_content = f"""
+    html_content = """
     <html>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background:#f9f9f9;">
-        <div style="background:white; border-radius:12px; padding:32px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-            <h1 style="color:#2c3e50; font-size:24px;">¡Bienvenido/a, {nombre_display}! 🎉</h1>
-            <p style="color:#555; line-height:1.6;">Gracias por unirte. Hemos seleccionado una oportunidad exclusiva especialmente para ti:</p>
-
-            <div style="background:#fff5f5; border-left:4px solid #e74c3c; border-radius:8px; padding:24px; margin:24px 0;">
-                <h2 style="color:#e74c3c; margin:0 0 8px 0; font-size:20px;">🔥 Oferta Exclusiva</h2>
-                <p style="color:#555; margin:0 0 16px 0;">Accede ahora antes de que expire esta oportunidad.</p>
-                <a href="{afiliado_url}?ref={ref}"
-                   style="background:#e74c3c;color:white;padding:14px 28px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;font-size:16px;">
-                   Ver Oferta Ahora →
-                </a>
-            </div>
-
-            <p style="color:#aaa; font-size:12px; margin-top:24px;">
-                MailPro — Si no deseas recibir más emails, ignora este mensaje.
-            </p>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2c3e50;">Bienvenido/a """ + nombre_display + """!</h1>
+        <p>Gracias por registrarte. Tenemos algo especial para ti:</p>
+        <div style="background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;">
+            <h2 style="color: #e74c3c;">Oferta Exclusiva</h2>
+            <p>Hemos seleccionado esta oportunidad especialmente para ti.</p>
+            <a href='""" + afiliado_url + """?ref=""" + ref + """'
+               style="background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;">
+               Ver Oferta
+            </a>
         </div>
+        <p style="color: #7f8c8d; font-size: 12px;">
+            MailPro - Marketing Automatico
+        </p>
     </body>
     </html>
     """
@@ -107,15 +102,15 @@ try:
     message = Mail(
         from_email=(FROM_EMAIL, FROM_NAME),
         to_emails=email,
-        subject=f"🎁 {nombre_display}, tu oferta exclusiva está esperando",
+        subject="Tu oferta exclusiva esta aqui!",
         html_content=html_content
     )
     sg = SendGridAPIClient(SENDGRID_API_KEY)
     sg.send(message)
-    print(f"[EMAIL] Enviado a {email}")
+    print("[EMAIL] Enviado a " + email)
     return True
 except Exception as e:
-    print(f"[EMAIL ERROR] {e}")
+    print("[EMAIL ERROR] " + str(e))
     return False
 ```
 
@@ -133,14 +128,14 @@ conn.commit()
 cur.close()
 conn.close()
 except Exception as e:
-print(f”[MARCAR ERROR] {e}”)
+print(”[MARCAR ERROR] “ + str(e))
 
-# ─── RUTAS ────────────────────────────────────────────────
+# RUTAS
 
 @app.route(”/”)
 def health():
 return jsonify({
-“status”: “✅ MailPro CPA Agent activo”,
+“status”: “MailPro CPA Agent activo”,
 “version”: “1.0.0”,
 “sendgrid_configurado”: bool(SENDGRID_API_KEY),
 “db_configurada”: bool(DATABASE_URL),
@@ -160,7 +155,7 @@ fuente = data.get("fuente") or data.get("source") or request.referrer or "direct
 ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
 if not email or "@" not in email:
-    return jsonify({"status": "error", "mensaje": "Email inválido"}), 400
+    return jsonify({"status": "error", "mensaje": "Email invalido"}), 400
 
 conn = get_db()
 if not conn:
@@ -189,11 +184,11 @@ try:
     else:
         return _cors_response(jsonify({
             "status": "duplicado",
-            "mensaje": "Este email ya está registrado"
+            "mensaje": "Este email ya esta registrado"
         }))
 
 except Exception as e:
-    print(f"[REGISTER ERROR] {e}")
+    print("[REGISTER ERROR] " + str(e))
     return jsonify({"status": "error", "mensaje": str(e)}), 500
 ```
 
@@ -215,7 +210,7 @@ if conn:
         cur.close()
         conn.close()
     except Exception as e:
-        print(f"[TRACK ERROR] {e}")
+        print("[TRACK ERROR] " + str(e))
 
 destino = AFFILIATE_LINKS.get(oferta)
 if not destino:
@@ -228,7 +223,7 @@ return redirect(destino)
 def stats():
 conn = get_db()
 if not conn:
-return jsonify({“error”: “Sin conexión a DB”}), 500
+return jsonify({“error”: “Sin conexion a DB”}), 500
 
 ```
 try:
@@ -266,7 +261,7 @@ except Exception as e:
 def get_leads():
 conn = get_db()
 if not conn:
-return jsonify({“error”: “Sin conexión a DB”}), 500
+return jsonify({“error”: “Sin conexion a DB”}), 500
 
 ```
 try:
@@ -289,7 +284,7 @@ except Exception as e:
     return jsonify({"error": str(e)}), 500
 ```
 
-# ─── CORS HELPERS ─────────────────────────────────────────
+# CORS
 
 def _cors_preflight():
 resp = app.make_default_options_response()
@@ -307,7 +302,7 @@ def add_cors(response):
 response.headers[“Access-Control-Allow-Origin”] = “*”
 return response
 
-# ─── INICIO ───────────────────────────────────────────────
+# INICIO
 
 if **name** == “**main**”:
 init_db()

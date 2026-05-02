@@ -1,46 +1,30 @@
 import os
-import psycopg2
-from flask import Flask, request, jsonify
+import psycopg2 # Conector para tu PostgreSQL en Railway
+import requests
 
-app = Flask(__name__)
+# Configuración usando los datos de tu imagen
+DB_CONFIG = {
+    "host": "shuttle.proxy.rlwy.net",
+    "port": "34359",
+    "user": os.getenv("DB_USER"),
+    "pass": os.getenv("DB_PASSWORD"),
+    "dbname": "railway"
+}
 
-# Conexión ultra-segura a la base de datos
-def get_db_connection():
-    try:
-        db_url = os.getenv('DATABASE_URL')
-        if not db_url:
-            return None
-        return psycopg2.connect(db_url)
-    except Exception as e:
-        print(f"Error de conexión: {e}")
-        return None
+def post_to_facebook(message, link):
+    """Publica automáticamente en tu página con 1,922 seguidores"""
+    page_id = os.getenv("FB_PAGE_ID")
+    access_token = os.getenv("FB_ACCESS_TOKEN")
+    url = f"https://graph.facebook.com/{page_id}/feed"
+    payload = {"message": message, "link": link, "access_token": access_token}
+    return requests.post(url, data=payload)
 
-@app.route('/')
-def home():
-    return "✅ Sistema MailPro Operativo"
-
-@app.route('/track', methods=['POST'])
-def track_lead():
-    data = request.json
-    if not data or 'email' not in data:
-        return jsonify({"status": "error", "message": "Email faltante"}), 400
-    
-    email = data.get('email')
-    conn = get_db_connection()
-    
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute('INSERT INTO leads (email) VALUES (%s)', (email,))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return jsonify({"status": "success"}), 200
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 500
-    return jsonify({"status": "error", "message": "DB offline"}), 500
+# Ejemplo de flujo: Promocionar tus diseños de calaveras o monos
+def run_agent():
+    design_link = "https://www.redbubble.com/people/tu-usuario/shop"
+    msg = "¡Nuevo diseño disponible! Estilo urbano para los que buscan algo diferente. 💀🔥"
+    response = post_to_facebook(msg, design_link)
+    print(f"Estado de la publicación: {response.status_code}")
 
 if __name__ == "__main__":
-    # Railway inyecta el puerto automáticamente aquí
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    run_agent()

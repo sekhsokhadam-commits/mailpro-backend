@@ -8,12 +8,11 @@ app = Flask(__name__)
 
 # CONFIG
 
-DATABASE_URL = os.environ.get(“DATABASE_URL”)
-SENDGRID_API_KEY = os.environ.get(“SENDGRID_API_KEY”)
-FROM_EMAIL = os.environ.get(“FROM_EMAIL”, “noreply@mailpro.com”)
-FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)
-PORT = int(os.environ.get(“PORT”, 8080))
-
+DATABASE_URL = os.environ.get("DATABASE_UR")
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@mailpro.com")
+FROM_NAME = os.environ.get("FROM_NAME", "MailPro")
+PORT = int(os.environ.get("PORT", 8080))
 AFFILIATE_LINKS = {
 “oferta1”: “https://go.hotmart.com/H101177980R”,
 “oferta2”: “https://go.hotmart.com/H101177980R”,

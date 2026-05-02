@@ -3,7 +3,8 @@ import psycopg2
 from flask import Flask, request, jsonify, redirect
 import hashlib
 
-app = Flask(**name**)
+app = Flask(__name__)
+
 
 # CONFIG
 

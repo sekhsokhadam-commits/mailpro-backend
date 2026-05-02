@@ -1,7 +1,6 @@
 import os
 import psycopg2
 from flask import Flask, request, jsonify, redirect
-from datetime import datetime
 import hashlib
 
 app = Flask(**name**)
@@ -15,9 +14,9 @@ FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)
 PORT = int(os.environ.get(“PORT”, 8080))
 
 AFFILIATE_LINKS = {
-“oferta1”: os.environ.get(“AFFILIATE_LINK_1”, “https://tu-link-afiliado.com/oferta1”),
-“oferta2”: os.environ.get(“AFFILIATE_LINK_2”, “https://tu-link-afiliado.com/oferta2”),
-“oferta3”: os.environ.get(“AFFILIATE_LINK_3”, “https://tu-link-afiliado.com/oferta3”),
+“oferta1”: “https://go.hotmart.com/H101177980R”,
+“oferta2”: os.environ.get(“AFFILIATE_LINK_2”, “https://go.hotmart.com/H101177980R”),
+“oferta3”: os.environ.get(“AFFILIATE_LINK_3”, “https://go.hotmart.com/H101177980R”),
 }
 
 # ─── BASE DE DATOS ────────────────────────────────────────
@@ -78,25 +77,29 @@ try:
     from sendgrid.helpers.mail import Mail
 
     nombre_display = nombre if nombre else "amigo/a"
-    afiliado_url = AFFILIATE_LINKS.get("oferta1", "#")
+    afiliado_url = AFFILIATE_LINKS.get("oferta1")
+    ref = hashlib.md5(email.encode()).hexdigest()[:8]
 
     html_content = f"""
     <html>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2c3e50;">¡Bienvenido/a a MailPro, {nombre_display}!</h1>
-        <p>Gracias por registrarte. Tenemos algo especial para ti:</p>
-        <div style="background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;">
-            <h2 style="color: #e74c3c; margin: 0 0 10px 0;">🔥 Oferta Exclusiva</h2>
-            <p>Hemos seleccionado esta oportunidad especialmente para ti.</p>
-            <a href="{afiliado_url}?ref={hashlib.md5(email.encode()).hexdigest()[:8]}"
-               style="background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:10px;">
-               Ver Oferta →
-            </a>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background:#f9f9f9;">
+        <div style="background:white; border-radius:12px; padding:32px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <h1 style="color:#2c3e50; font-size:24px;">¡Bienvenido/a, {nombre_display}! 🎉</h1>
+            <p style="color:#555; line-height:1.6;">Gracias por unirte. Hemos seleccionado una oportunidad exclusiva especialmente para ti:</p>
+
+            <div style="background:#fff5f5; border-left:4px solid #e74c3c; border-radius:8px; padding:24px; margin:24px 0;">
+                <h2 style="color:#e74c3c; margin:0 0 8px 0; font-size:20px;">🔥 Oferta Exclusiva</h2>
+                <p style="color:#555; margin:0 0 16px 0;">Accede ahora antes de que expire esta oportunidad.</p>
+                <a href="{afiliado_url}?ref={ref}"
+                   style="background:#e74c3c;color:white;padding:14px 28px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;font-size:16px;">
+                   Ver Oferta Ahora →
+                </a>
+            </div>
+
+            <p style="color:#aaa; font-size:12px; margin-top:24px;">
+                MailPro — Si no deseas recibir más emails, ignora este mensaje.
+            </p>
         </div>
-        <p style="color: #7f8c8d; font-size: 12px;">
-            Si no deseas recibir más emails, ignora este mensaje.<br>
-            MailPro — Marketing Automático
-        </p>
     </body>
     </html>
     """
@@ -104,7 +107,7 @@ try:
     message = Mail(
         from_email=(FROM_EMAIL, FROM_NAME),
         to_emails=email,
-        subject=f"¡Bienvenido/a {nombre_display}! Tu oferta especial está aquí 🎁",
+        subject=f"🎁 {nombre_display}, tu oferta exclusiva está esperando",
         html_content=html_content
     )
     sg = SendGridAPIClient(SENDGRID_API_KEY)

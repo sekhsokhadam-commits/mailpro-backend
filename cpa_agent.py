@@ -1,11 +1,8 @@
 import os
 import psycopg2
 from flask import Flask, request, jsonify, redirect
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from datetime import datetime
 import hashlib
-import json
 
 app = Flask(**name**)
 
@@ -16,8 +13,6 @@ SENDGRID_API_KEY = os.environ.get(“SENDGRID_API_KEY”)
 FROM_EMAIL = os.environ.get(“FROM_EMAIL”, “noreply@mailpro.com”)
 FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)
 PORT = int(os.environ.get(“PORT”, 8080))
-
-# Tus links de afiliado/CPA — agrégalos aquí
 
 AFFILIATE_LINKS = {
 “oferta1”: os.environ.get(“AFFILIATE_LINK_1”, “https://tu-link-afiliado.com/oferta1”),
@@ -74,37 +69,38 @@ print(f”[DB INIT ERROR] {e}”)
 
 def enviar_email_bienvenida(email, nombre=””):
 if not SENDGRID_API_KEY:
-print(”[EMAIL] SENDGRID_API_KEY no configurada.”)
+print(”[EMAIL] SENDGRID_API_KEY no configurada aún.”)
 return False
 
 ```
-nombre_display = nombre if nombre else "amigo/a"
-afiliado_url = AFFILIATE_LINKS.get("oferta1", "#")
-
-html_content = f"""
-<html>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h1 style="color: #2c3e50;">¡Bienvenido/a a MailPro, {nombre_display}!</h1>
-    <p>Gracias por registrarte. Tenemos algo especial para ti:</p>
-
-    <div style="background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;">
-        <h2 style="color: #e74c3c; margin: 0 0 10px 0;">🔥 Oferta Exclusiva</h2>
-        <p>Hemos seleccionado esta oportunidad especialmente para ti.</p>
-        <a href="{afiliado_url}?ref={hashlib.md5(email.encode()).hexdigest()[:8]}"
-           style="background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:10px;">
-           Ver Oferta →
-        </a>
-    </div>
-
-    <p style="color: #7f8c8d; font-size: 12px;">
-        Si no deseas recibir más emails, ignora este mensaje.<br>
-        MailPro — Marketing Automático
-    </p>
-</body>
-</html>
-"""
-
 try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail
+
+    nombre_display = nombre if nombre else "amigo/a"
+    afiliado_url = AFFILIATE_LINKS.get("oferta1", "#")
+
+    html_content = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2c3e50;">¡Bienvenido/a a MailPro, {nombre_display}!</h1>
+        <p>Gracias por registrarte. Tenemos algo especial para ti:</p>
+        <div style="background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;">
+            <h2 style="color: #e74c3c; margin: 0 0 10px 0;">🔥 Oferta Exclusiva</h2>
+            <p>Hemos seleccionado esta oportunidad especialmente para ti.</p>
+            <a href="{afiliado_url}?ref={hashlib.md5(email.encode()).hexdigest()[:8]}"
+               style="background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;margin-top:10px;">
+               Ver Oferta →
+            </a>
+        </div>
+        <p style="color: #7f8c8d; font-size: 12px;">
+            Si no deseas recibir más emails, ignora este mensaje.<br>
+            MailPro — Marketing Automático
+        </p>
+    </body>
+    </html>
+    """
+
     message = Mail(
         from_email=(FROM_EMAIL, FROM_NAME),
         to_emails=email,
@@ -120,6 +116,22 @@ except Exception as e:
     return False
 ```
 
+def _marcar_email_enviado(email):
+conn = get_db()
+if not conn:
+return
+try:
+cur = conn.cursor()
+cur.execute(
+“UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s”,
+(email,)
+)
+conn.commit()
+cur.close()
+conn.close()
+except Exception as e:
+print(f”[MARCAR ERROR] {e}”)
+
 # ─── RUTAS ────────────────────────────────────────────────
 
 @app.route(”/”)
@@ -127,12 +139,13 @@ def health():
 return jsonify({
 “status”: “✅ MailPro CPA Agent activo”,
 “version”: “1.0.0”,
+“sendgrid_configurado”: bool(SENDGRID_API_KEY),
+“db_configurada”: bool(DATABASE_URL),
 “endpoints”: [”/register”, “/track/<oferta>”, “/stats”, “/leads”]
 })
 
 @app.route(”/register”, methods=[“POST”, “OPTIONS”])
 def register():
-“”“Recibe registros del formulario web.”””
 if request.method == “OPTIONS”:
 return _cors_preflight()
 
@@ -162,7 +175,6 @@ try:
     conn.close()
 
     if result:
-        # Lead nuevo — enviar email de bienvenida
         enviado = enviar_email_bienvenida(email, nombre)
         if enviado:
             _marcar_email_enviado(email)
@@ -182,25 +194,8 @@ except Exception as e:
     return jsonify({"status": "error", "mensaje": str(e)}), 500
 ```
 
-def _marcar_email_enviado(email):
-conn = get_db()
-if not conn:
-return
-try:
-cur = conn.cursor()
-cur.execute(
-“UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s”,
-(email,)
-)
-conn.commit()
-cur.close()
-conn.close()
-except:
-pass
-
 @app.route(”/track/<oferta>”)
 def track_click(oferta):
-“”“Trackea clicks en links de afiliado y redirige.”””
 ip = request.headers.get(“X-Forwarded-For”, request.remote_addr)
 email_ref = request.args.get(“ref”, “anonimo”)
 
@@ -228,7 +223,6 @@ return redirect(destino)
 
 @app.route(”/stats”)
 def stats():
-“”“Estadísticas básicas del sistema.”””
 conn = get_db()
 if not conn:
 return jsonify({“error”: “Sin conexión a DB”}), 500
@@ -267,7 +261,6 @@ except Exception as e:
 
 @app.route(”/leads”)
 def get_leads():
-“”“Lista los últimos 50 leads.”””
 conn = get_db()
 if not conn:
 return jsonify({“error”: “Sin conexión a DB”}), 500

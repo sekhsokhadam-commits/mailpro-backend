@@ -42,8 +42,15 @@ def init_db():
                 nombre VARCHAR(255),
                 ip VARCHAR(100),
                 fuente VARCHAR(255)
+                  cur.execute('''
+            CREATE TABLE IF NOT EXISTS leads (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                nombre VARCHAR(255),
+                ip VARCHAR(100),
+                fuente VARCHAR(255)
             );
-        ''')
+        ''')          ← Solo 1 paréntesis de cierre
         conn.commit()
         cur.close()
         conn.close()
@@ -51,8 +58,6 @@ def init_db():
     except Exception as e:
         print('[DB INIT ERROR] ' + str(e))
 
-);
-""")
 cur.execute("""
 CREATE TABLE IF NOT EXISTS clicks (
 id SERIAL PRIMARY KEY,

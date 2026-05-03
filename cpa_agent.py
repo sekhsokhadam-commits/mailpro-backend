@@ -121,14 +121,14 @@ return
 try:
 cur = conn.cursor()
 cur.execute(
-“UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s”,
+"UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s",
 (email,)
 )
 conn.commit()
 cur.close()
 conn.close()
 except Exception as e:
-print(”[MARCAR ERROR] “ + str(e))
+print("[MARCAR ERROR] " + str(e))
 
 # RUTAS
 
@@ -192,10 +192,10 @@ except Exception as e:
     return jsonify({"status": "error", "mensaje": str(e)}), 500
 ```
 
-@app.route(”/track/<oferta>”)
+@app.route("/track/<oferta>")
 def track_click(oferta):
-ip = request.headers.get(“X-Forwarded-For”, request.remote_addr)
-email_ref = request.args.get(“ref”, “anonimo”)
+ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+email_ref = request.args.get("ref", "anonimo")
 
 ```
 conn = get_db()
@@ -219,11 +219,11 @@ if not destino:
 return redirect(destino)
 ```
 
-@app.route(”/stats”)
+@app.route("/stats")
 def stats():
 conn = get_db()
 if not conn:
-return jsonify({“error”: “Sin conexion a DB”}), 500
+return jsonify({"error": "Sin conexion a DB"}), 500
 
 ```
 try:
@@ -261,7 +261,7 @@ except Exception as e:
 def get_leads():
 conn = get_db()
 if not conn:
-return jsonify({“error”: “Sin conexion a DB”}), 500
+return jsonify({"error": "Sin conexion a DB"}), 500
 
 ```
 try:
@@ -288,22 +288,22 @@ except Exception as e:
 
 def _cors_preflight():
 resp = app.make_default_options_response()
-resp.headers[“Access-Control-Allow-Origin”] = “*”
-resp.headers[“Access-Control-Allow-Methods”] = “POST, GET, OPTIONS”
-resp.headers[“Access-Control-Allow-Headers”] = “Content-Type”
+resp.headers["Access-Control-Allow-Origin"] = "*"
+resp.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
 return resp
 
 def _cors_response(response):
-response.headers[“Access-Control-Allow-Origin”] = “*”
+response.headers["Access-Control-Allow-Origin"] = "*"
 return response
 
 @app.after_request
 def add_cors(response):
-response.headers[“Access-Control-Allow-Origin”] = “*”
+response.headers["Access-Control-Allow-Origin"] = "*"
 return response
 
 # INICIO
 
-if **name** == “**main**”:
+if **name** == "**main**":
 init_db()
 app.run(host=“0.0.0.0”, port=PORT)

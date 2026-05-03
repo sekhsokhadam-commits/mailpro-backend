@@ -139,10 +139,10 @@ return jsonify({
 "version": "1.0.0",
 "sendgrid_configurado": bool(SENDGRID_API_KEY),
 "db_configurada": bool(DATABASE_URL),
-"endpoints": ["/register", "/track/<oferta>", “stats”, “/leads”]
+"endpoints": ["/register", "/track/<oferta>", "stats", "/leads"]
 })
 
-@app.route("/register", methods=["POST”, "/OPTIONS"])
+@app.route("/register", methods=["POST", "/OPTIONS"])
 def register():
 if request.method == "OPTIONS":
 return _cors_preflight()

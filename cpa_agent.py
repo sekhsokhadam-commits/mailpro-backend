@@ -257,7 +257,7 @@ except Exception as e:
     return jsonify({"error": str(e)}), 500
 ```
 
-@app.route(”/leads”)
+@app.route("/leads")
 def get_leads():
 conn = get_db()
 if not conn:

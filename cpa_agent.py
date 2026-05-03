@@ -20,32 +20,37 @@ AFFILIATE_LINKS = {
 }
 
 # BASE DE DATOS
-
 def get_db():
-   try:
-conn = psycopg2.connect(DATABASE_URL)
-return conn
-except Exception as e:
-print("[DB ERROR] " + str(e))
-return None
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    except Exception as e:
+        print('[DB ERROR] ' + str(e))
+        return None
 
 def init_db():
-conn = get_db()
-if not conn:
-print("[ERROR] No se pudo conectar a la base de datos.")
-return
-try:
-cur = conn.cursor()
-cur.execute("""
-CREATE TABLE IF NOT EXISTS leads (
-id SERIAL PRIMARY KEY,
-email VARCHAR(255) UNIQUE NOT NULL,
-nombre VARCHAR(255),
-ip VARCHAR(100),
-fuente VARCHAR(255),
-creado_en TIMESTAMP DEFAULT NOW(),
-email_enviado BOOLEAN DEFAULT FALSE,
-ultimo_email TIMESTAMP
+    conn = get_db()
+    if not conn:
+        print('[ERROR] No se pudo conectar a la base de datos')
+        return
+    try:
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS leads (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                nombre VARCHAR(255),
+                ip VARCHAR(100),
+                fuente VARCHAR(255)
+            );
+        ''')
+        conn.commit()
+        cur.close()
+        conn.close()
+        print('[OK] Base de datos inicializada')
+    except Exception as e:
+        print('[DB INIT ERROR] ' + str(e))
+
 );
 """)
 cur.execute("""

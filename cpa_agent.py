@@ -68,7 +68,7 @@ print("[DB INIT ERROR] " + str(e))
 
 def enviar_email_bienvenida(email, nombre=""):
 if not SENDGRID_API_KEY:
-print(”[EMAIL] SENDGRID_API_KEY no configurada.")
+print("[EMAIL] SENDGRID_API_KEY no configurada.")
 return False
 try:
 from sendgrid import SendGridAPIClient

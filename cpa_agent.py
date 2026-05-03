@@ -3,20 +3,20 @@ import psycopg2
 from flask import Flask, request, jsonify, redirect
 import hashlib
 
-app = Flask(**name**)
+app = Flask(__name__)
 
 # CONFIG
 
 DATABASE_URL = os.environ.get ("DATABASE_URL")
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
-FROM_EMAIL = os.environ.get(“FROM_EMAIL”, “noreply@mailpro.com”)
-FROM_NAME = os.environ.get(“FROM_NAME”, “MailPro”)
-PORT = int(os.environ.get(“PORT”, 8080))
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@mailpro.com")
+FROM_NAME = os.environ.get("FROM_NAME", "MailPro")
+PORT = int(os.environ.get("PORT", 8080))
 
 AFFILIATE_LINKS = {
-“oferta1”: “https://go.hotmart.com/H101177980R”,
-“oferta2”: “https://go.hotmart.com/H101177980R”,
-“oferta3”: “https://go.hotmart.com/H101177980R”,
+"oferta1": "https://go.hotmart.com/H101177980R",
+"oferta2": "https://go.hotmart.com/H101177980R",
+"oferta3": "https://go.hotmart.com/H101177980R",
 }
 
 # BASE DE DATOS
@@ -26,7 +26,7 @@ try:
 conn = psycopg2.connect(DATABASE_URL)
 return conn
 except Exception as e:
-print(”[DB ERROR] “ + str(e))
+print("[DB ERROR] " + str(e))
 return None
 
 def init_db():
@@ -36,7 +36,7 @@ print(”[ERROR] No se pudo conectar a la base de datos.”)
 return
 try:
 cur = conn.cursor()
-cur.execute(”””
+cur.execute("""
 CREATE TABLE IF NOT EXISTS leads (
 id SERIAL PRIMARY KEY,
 email VARCHAR(255) UNIQUE NOT NULL,
@@ -47,8 +47,8 @@ creado_en TIMESTAMP DEFAULT NOW(),
 email_enviado BOOLEAN DEFAULT FALSE,
 ultimo_email TIMESTAMP
 );
-“””)
-cur.execute(”””
+""")
+cur.execute("""
 CREATE TABLE IF NOT EXISTS clicks (
 id SERIAL PRIMARY KEY,
 lead_email VARCHAR(255),
@@ -56,19 +56,19 @@ oferta VARCHAR(100),
 ip VARCHAR(100),
 creado_en TIMESTAMP DEFAULT NOW()
 );
-“””)
+""")
 conn.commit()
 cur.close()
 conn.close()
-print(”[DB] Tablas listas.”)
+print("[DB] Tablas listas.")
 except Exception as e:
-print(”[DB INIT ERROR] “ + str(e))
+print("[DB INIT ERROR] " + str(e))
 
 # ENVIO DE EMAIL
 
-def enviar_email_bienvenida(email, nombre=””):
+def enviar_email_bienvenida(email, nombre=""):
 if not SENDGRID_API_KEY:
-print(”[EMAIL] SENDGRID_API_KEY no configurada.”)
+print(”[EMAIL] SENDGRID_API_KEY no configurada.")
 return False
 try:
 from sendgrid import SendGridAPIClient
@@ -132,19 +132,19 @@ print(”[MARCAR ERROR] “ + str(e))
 
 # RUTAS
 
-@app.route(”/”)
+@app.route("/")
 def health():
 return jsonify({
-“status”: “MailPro CPA Agent activo”,
-“version”: “1.0.0”,
-“sendgrid_configurado”: bool(SENDGRID_API_KEY),
-“db_configurada”: bool(DATABASE_URL),
-“endpoints”: [”/register”, “/track/<oferta>”, “/stats”, “/leads”]
+"status": "MailPro CPA Agent activo",
+"version": "1.0.0",
+"sendgrid_configurado": bool(SENDGRID_API_KEY),
+"db_configurada": bool(DATABASE_URL),
+"endpoints": ["/register", "/track/<oferta>", “stats”, “/leads”]
 })
 
-@app.route(”/register”, methods=[“POST”, “OPTIONS”])
+@app.route("/register", methods=["POST”, "/OPTIONS"])
 def register():
-if request.method == “OPTIONS”:
+if request.method == "OPTIONS":
 return _cors_preflight()
 
 ```

@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # CONFIG
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get ("DATABASE_URL")
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@mailpro.com")
 FROM_NAME = os.environ.get("FROM_NAME", "MailPro")
@@ -20,34 +20,59 @@ AFFILIATE_LINKS = {
 }
 
 # BASE DE DATOS
-
 def get_db():
 try:
-conn = psycopg2.connect(DATABASE_URL)
-return conn
-except Exception as e:
-print("[DB ERROR] " + str(e))
-return None
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    except Exception as e:
+        print('[DB ERROR] ' + str(e))
+        return None
 
 def init_db():
-conn = get_db()
-if not conn:
-print("[ERROR] No se pudo conectar a la base de datos.")
-return
-try:
-cur = conn.cursor()
-cur.execute("""
-CREATE TABLE IF NOT EXISTS leads (
-id SERIAL PRIMARY KEY,
-email VARCHAR(255) UNIQUE NOT NULL,
-nombre VARCHAR(255),
-ip VARCHAR(100),
-fuente VARCHAR(255),
-creado_en TIMESTAMP DEFAULT NOW(),
-email_enviado BOOLEAN DEFAULT FALSE,
-ultimo_email TIMESTAMP
-);
-""")
+    conn = get_db()
+    if not conn:
+        print('[ERROR] No se pudo conectar a la base de datos')
+        return
+    try:
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS leads (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                nombre VARCHAR(255),
+                ip VARCHAR(100),
+                fuente VARCHAR(255)
+                  def init_db():
+    conn = get_db()
+    if not conn:
+        print('[ERROR] No se pudo conectar a la base de datos')
+        return
+    try:
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS leads (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                nombre VARCHAR(255),
+                ip VARCHAR(100),
+                fuente VARCHAR(255)
+            );
+        ''')
+        conn.commit()
+        cur.close()
+        conn.close()
+        print('[OK] Base de datos inicializada')
+    except Exception as e:
+        print('[DB INIT ERROR] ' + str(e))
+
+        ''')          ← Solo 1 paréntesis de cierre
+        conn.commit()
+        cur.close()
+        conn.close()
+        print('[OK] Base de datos inicializada')
+    except Exception as e:
+        print('[DB INIT ERROR] ' + str(e))
+
 cur.execute("""
 CREATE TABLE IF NOT EXISTS clicks (
 id SERIAL PRIMARY KEY,
@@ -139,10 +164,10 @@ return jsonify({
 "version": "1.0.0",
 "sendgrid_configurado": bool(SENDGRID_API_KEY),
 "db_configurada": bool(DATABASE_URL),
-"endpoints": ["/register", "/track/<oferta>", "/stats", "/leads"]
+"endpoints": ["/register", "/track/<oferta>", "stats", "/leads"]
 })
 
-@app.route("/register", methods=["POST", "OPTIONS"])
+@app.route("/register", methods=["POST", "/OPTIONS"])
 def register():
 if request.method == "OPTIONS":
 return _cors_preflight()
@@ -304,6 +329,7 @@ return response
 
 # INICIO
 
-if **name** == "**main**":
+if __name__ == '__main__':     ← ✅
+
 init_db()
 app.run(host="0.0.0.0", port=PORT)

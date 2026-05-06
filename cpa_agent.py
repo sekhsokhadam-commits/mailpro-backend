@@ -25,7 +25,7 @@ def get_db():
         conn = psycopg2.connect(DATABASE_URL)
         return conn
     except Exception as e:
-        print(‘[DB ERROR] ‘ + str(e))
+        print('[DB ERROR] ' + str(e))
         return None
 
 def init_db():

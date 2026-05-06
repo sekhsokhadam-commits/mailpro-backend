@@ -21,7 +21,7 @@ AFFILIATE_LINKS = {
 
 # BASE DE DATOS
 def get_db():
-try:
+   try:
         conn = psycopg2.connect(DATABASE_URL)
         return conn
     except Exception as e:

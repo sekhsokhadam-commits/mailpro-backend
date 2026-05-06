@@ -31,7 +31,7 @@ def get_db():
 def init_db():
     conn = get_db()
     if not conn:
-        print(‘[ERROR] No se pudo conectar a la base de datos’)
+        print('[ERROR] No se pudo conectar a la base de datos')
         return
     try:
         cur = conn.cursor()

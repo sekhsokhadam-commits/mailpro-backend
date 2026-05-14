@@ -37,7 +37,7 @@ def init_db():
         cur = conn.cursor()
         
         # Tabla leads
-        cur.execute(‘’’
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS leads (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -48,10 +48,10 @@ def init_db():
                 ultimo_email TIMESTAMP,
                 creado_en TIMESTAMP DEFAULT NOW()
             );
-        ‘’’)
+        ''')
         
         # Tabla clicks
-        cur.execute(‘’’
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS clicks (
                 id SERIAL PRIMARY KEY,
                 lead_email VARCHAR(255),
@@ -59,14 +59,18 @@ def init_db():
                 ip VARCHAR(100),
                 creado_en TIMESTAMP DEFAULT NOW()
             );
-        ‘’’)
+        ''')
         
         conn.commit()
         cur.close()
         conn.close()
-        print(‘[OK] Base de datos inicializada’)
+        print('[OK] Base de datos inicializada')
     except Exception as e:
-        print(‘[DB INIT ERROR] ‘ + str(e))
+        print('[DB INIT ERROR] ' + str(e))
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 # ENVIO DE EMAIL
 
@@ -78,42 +82,42 @@ def enviar_email_bienvenida(email, nombre=""):
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import Mail
 
-        nombre_display = nombre if nombre else “amigo/a”
-        afiliado_url = AFFILIATE_LINKS.get(“oferta1”)
+        nombre_display = nombre if nombre else "amigo/a"
+        afiliado_url = AFFILIATE_LINKS.get("oferta1")
         ref = hashlib.md5(email.encode()).hexdigest()[:8]
 
-        html_content = “””
+        html_content = f"""
         <html>
-        <body style=“font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;”>
-            <h1 style=“color: #2c3e50;”>Bienvenido/a “”” + nombre_display + “””!</h1>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #2c3e50;">¡Bienvenido/a {nombre_display}!</h1>
             <p>Gracias por registrarte. Tenemos algo especial para ti:</p>
-            <div style=“background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;”>
-                <h2 style=“color: #e74c3c;”>Oferta Exclusiva</h2>
+            <div style="background: #f8f9fa; border-left: 4px solid #e74c3c; padding: 20px; margin: 20px 0;">
+                <h2 style="color: #e74c3c;">Oferta Exclusiva</h2>
                 <p>Hemos seleccionado esta oportunidad especialmente para ti.</p>
-                <a href=‘””” + afiliado_url + “””?ref=“”” + ref + “””’
-                   style=“background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;”>
+                <a href='{afiliado_url}?ref={ref}'
+                   style="background:#e74c3c;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;">
                    Ver Oferta
                 </a>
             </div>
-            <p style=“color: #7f8c8d; font-size: 12px;”>
+            <p style="color: #7f8c8d; font-size: 12px;">
                 MailPro - Marketing Automatico
             </p>
         </body>
         </html>
-        “””
+        """
 
         message = Mail(
             from_email=(FROM_EMAIL, FROM_NAME),
             to_emails=email,
-            subject=“Tu oferta exclusiva esta aqui!”,
+            subject="Tu oferta exclusiva esta aqui!",
             html_content=html_content
         )
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         sg.send(message)
-        print(“[EMAIL] Enviado a “ + email)
+        print("[EMAIL] Enviado a " + email)
         return True
     except Exception as e:
-        print(“[EMAIL ERROR] “ + str(e))
+        print("[EMAIL ERROR] " + str(e))
         return False
 
 def _marcar_email_enviado(email):
@@ -123,182 +127,202 @@ def _marcar_email_enviado(email):
     try:
         cur = conn.cursor()
         cur.execute(
-            “UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s”,
+            "UPDATE leads SET email_enviado=TRUE, ultimo_email=NOW() WHERE email=%s",
             (email,)
         )
         conn.commit()
         cur.close()
         conn.close()
     except Exception as e:
-        print(“[MARCAR ERROR] “ + str(e))
+        print("[MARCAR ERROR] " + str(e))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 # RUTAS
 
-@app.route(“/“)
+@app.route("/")
 def health():
     return jsonify({
-        “status”: “MailPro CPA Agent activo”,
-        “version”: “1.0.0”,
-        “sendgrid_configurado”: bool(SENDGRID_API_KEY),
-        “db_configurada”: bool(DATABASE_URL),
-        “endpoints”: [“/register”, “/track/<oferta>”, “/stats”, “/leads”]
+        "status": "MailPro CPA Agent activo",
+        "version": "1.0.0",
+        "sendgrid_configurado": bool(SENDGRID_API_KEY),
+        "db_configurada": bool(DATABASE_URL),
+        "endpoints": ["/register", "/track/<oferta>", "/stats", "/leads"]
     })
 
-@app.route(“/register”, methods=[“POST”, “OPTIONS”])
+@app.route("/register", methods=["POST", "OPTIONS"])
 def register():
-    if request.method == “OPTIONS”:
+    if request.method == "OPTIONS":
         return _cors_preflight()
 
     data = request.get_json(silent=True) or request.form
-    email = (data.get(“email”) or “”).strip().lower()
-    nombre = (data.get(“nombre”) or data.get(“name”) or “”).strip()
-    fuente = data.get(“fuente”) or data.get(“source”) or request.referrer or “directo”
-    ip = request.headers.get(“X-Forwarded-For”, request.remote_addr)
+    email = (data.get("email") or "").strip().lower()
+    nombre = (data.get("nombre") or data.get("name") or "").strip()
+    fuente = data.get("fuente") or data.get("source") or request.referrer or "directo"
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-    if not email or “@“ not in email:
-        return jsonify({“status”: “error”, “mensaje”: “Email invalido”}), 400
+    if not email or "@" not in email:
+        return jsonify({"status": "error", "mensaje": "Email invalido"}), 400
 
     conn = get_db()
     if not conn:
-        return jsonify({“status”: “error”, “mensaje”: “Error de base de datos”}), 500
+        return jsonify({"status": "error", "mensaje": "Error de base de datos"}), 500
 
+    cur = None
     try:
         cur = conn.cursor()
         cur.execute(
-            “INSERT INTO leads (email, nombre, ip, fuente) VALUES (%s, %s, %s, %s) ON CONFLICT (email) DO NOTHING RETURNING id”,
+            "INSERT INTO leads (email, nombre, ip, fuente) VALUES (%s, %s, %s, %s) ON CONFLICT (email) DO NOTHING RETURNING id",
             (email, nombre, ip, fuente)
         )
         result = cur.fetchone()
         conn.commit()
-        cur.close()
-        conn.close()
 
         if result:
             enviado = enviar_email_bienvenida(email, nombre)
             if enviado:
                 _marcar_email_enviado(email)
             return _cors_response(jsonify({
-                “status”: “success”,
-                “mensaje”: “Registro exitoso”,
-                “email_enviado”: enviado
+                "status": "success",
+                "mensaje": "Registro exitoso",
+                "email_enviado": enviado
             }))
         else:
             return _cors_response(jsonify({
-                “status”: “duplicado”,
-                “mensaje”: “Este email ya esta registrado”
+                "status": "duplicado",
+                "mensaje": "Este email ya esta registrado"
             }))
 
     except Exception as e:
-        print(“[REGISTER ERROR] “ + str(e))
-        return jsonify({“status”: “error”, “mensaje”: str(e)}), 500
+        print("[REGISTER ERROR] " + str(e))
+        return jsonify({"status": "error", "mensaje": str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
-@app.route(“/track/<oferta>”)
+@app.route("/track/<oferta>")
 def track_click(oferta):
-    ip = request.headers.get(“X-Forwarded-For”, request.remote_addr)
-    email_ref = request.args.get(“ref”, “anonimo”)
+    # Validar que la oferta exista
+    if oferta not in AFFILIATE_LINKS:
+        return jsonify({"error": "Oferta no encontrada"}), 404
+    
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    email_ref = request.args.get("ref", "anonimo")
 
     conn = get_db()
     if conn:
+        cur = None
         try:
             cur = conn.cursor()
             cur.execute(
-                “INSERT INTO clicks (lead_email, oferta, ip) VALUES (%s, %s, %s)”,
-                (email_ref, oferta, ip)
+                "INSERT INTO clicks (lead_email, oferta, ip) VALUES (%s, %s, %s)",
+                (email_ref, oferta, ip)  # Ahora seguro porque 'oferta' está validado
             )
             conn.commit()
-            cur.close()
-            conn.close()
         except Exception as e:
-            print(“[TRACK ERROR] “ + str(e))
+            print("[TRACK ERROR] " + str(e))
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
     destino = AFFILIATE_LINKS.get(oferta)
-    if not destino:
-        return jsonify({“error”: “Oferta no encontrada”}), 404
-
     return redirect(destino)
 
-@app.route(“/stats”)
+@app.route("/stats")
 def stats():
     conn = get_db()
     if not conn:
-        return jsonify({“error”: “Sin conexion a DB”}), 500
+        return jsonify({"error": "Sin conexion a DB"}), 500
 
+    cur = None
     try:
         cur = conn.cursor()
-        cur.execute(“SELECT COUNT(*) FROM leads”)
+        cur.execute("SELECT COUNT(*) FROM leads")
         total_leads = cur.fetchone()[0]
 
-        cur.execute(“SELECT COUNT(*) FROM leads WHERE email_enviado=TRUE”)
+        cur.execute("SELECT COUNT(*) FROM leads WHERE email_enviado=TRUE")
         emails_enviados = cur.fetchone()[0]
 
-        cur.execute(“SELECT COUNT(*) FROM clicks”)
+        cur.execute("SELECT COUNT(*) FROM clicks")
         total_clicks = cur.fetchone()[0]
 
-        cur.execute(“SELECT oferta, COUNT(*) as clicks FROM clicks GROUP BY oferta ORDER BY clicks DESC”)
-        clicks_por_oferta = [{“oferta”: r[0], “clicks”: r[1]} for r in cur.fetchall()]
+        cur.execute("SELECT oferta, COUNT(*) as clicks FROM clicks GROUP BY oferta ORDER BY clicks DESC")
+        clicks_por_oferta = [{"oferta": r[0], "clicks": r[1]} for r in cur.fetchall()]
 
-        cur.execute(“SELECT COUNT(*) FROM leads WHERE creado_en > NOW() - INTERVAL ‘24 hours’”)
+        cur.execute("SELECT COUNT(*) FROM leads WHERE creado_en > NOW() - INTERVAL '24 hours'")
         leads_hoy = cur.fetchone()[0]
 
-        cur.close()
-        conn.close()
-
         return jsonify({
-            “total_leads”: total_leads,
-            “emails_enviados”: emails_enviados,
-            “total_clicks”: total_clicks,
-            “leads_hoy”: leads_hoy,
-            “clicks_por_oferta”: clicks_por_oferta
+            "total_leads": total_leads,
+            "emails_enviados": emails_enviados,
+            "total_clicks": total_clicks,
+            "leads_hoy": leads_hoy,
+            "clicks_por_oferta": clicks_por_oferta
         })
     except Exception as e:
-        return jsonify({“error”: str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
-@app.route(“/leads”)
+@app.route("/leads")
 def get_leads():
     conn = get_db()
     if not conn:
-        return jsonify({“error”: “Sin conexion a DB”}), 500
+        return jsonify({"error": "Sin conexion a DB"}), 500
 
+    cur = None
     try:
         cur = conn.cursor()
-        cur.execute(“””
+        cur.execute("""
             SELECT email, nombre, fuente, creado_en, email_enviado
             FROM leads ORDER BY creado_en DESC LIMIT 50
-        “””)
+        """)
         leads = [{
-            “email”: r[0],
-            “nombre”: r[1],
-            “fuente”: r[2],
-            “registrado”: r[3].isoformat() if r[3] else None,
-            “email_enviado”: r[4]
+            "email": r[0],
+            "nombre": r[1],
+            "fuente": r[2],
+            "registrado": r[3].isoformat() if r[3] else None,
+            "email_enviado": r[4]
         } for r in cur.fetchall()]
-        cur.close()
-        conn.close()
-        return jsonify({“leads”: leads, “total”: len(leads)})
+        return jsonify({"leads": leads, "total": len(leads)})
     except Exception as e:
-        return jsonify({“error”: str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 # CORS
 
 def _cors_preflight():
     resp = app.make_default_options_response()
-    resp.headers[“Access-Control-Allow-Origin”] = “*”
-    resp.headers[“Access-Control-Allow-Methods”] = “POST, GET, OPTIONS”
-    resp.headers[“Access-Control-Allow-Headers”] = “Content-Type”
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return resp
 
 def _cors_response(response):
-    response.headers[“Access-Control-Allow-Origin”] = “*”
+    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 @app.after_request
 def add_cors(response):
-    response.headers[“Access-Control-Allow-Origin”] = “*”
+    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 # INICIO
 
-if __name__ == ‘__main__’:
+if __name__ == '__main__':
     init_db()
-    app.run(host=“0.0.0.0”, port=PORT)
-    
+    app.run(host="0.0.0.0", port=PORT)
